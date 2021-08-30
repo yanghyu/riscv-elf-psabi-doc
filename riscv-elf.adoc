@@ -196,7 +196,7 @@ specific relocations show the instruction type in the Details column):
 | 40   | R_RISCV_SUB64         | 64-bit label subtraction        | _word64_    | V - S - A   |
 | 41   | R_RISCV_GNU_VTINHERIT | GNU {Cpp} vtable hierarchy      |             |             |
 | 42   | R_RISCV_GNU_VTENTRY   | GNU {Cpp} vtable member usage   |             |             |
-| 43   | R_RISCV_ALIGN         | Alignment statement             |             |             |
+| 43   | R_RISCV_ALIGN         | Alignment statement             |             |             | Auxiliary relocation for alignment.
 | 44   | R_RISCV_RVC_BRANCH    | PC-relative branch offset       | _CB-Type_   | S + A - P   |
 | 45   | R_RISCV_RVC_JUMP      | PC-relative jump offset         | _CJ-Type_   | S + A - P   |
 | 46   | R_RISCV_RVC_LUI       | Absolute address                | _CI-Type_   | S + A       |
@@ -481,6 +481,35 @@ label:
     add t2, t2, t1
     sw t2, t0, %pcrel_lo(label)   # R_RISCV_PCREL_LO12_S (label)
 ----
+
+==== Relocation for Alignment
+
+The relocation type `R_RISCV_ALIGN` marks a location that must be aligned to
+`N`-bytes, where `N` is the smallest power of two that greater than the value
+of the addend field, e.g. `R_RISCV_ALIGN` with addend value 2 means align to 4
+bytes; this relocation is only required if the containing section
+has any `R_RISCV_RELAX` relocations.
+
+The reason why we need a special relocation for handing alignment is because
+code relaxation might shrink the code during the linking process, that may
+cause an aligned point become mis-aligned after code relaxation.
+
+In order to let the linker have enough space to make sure the alignment
+requirement can be met after code relaxation, the assembler must insert a
+`R_RISCV_ALIGN` relocation and then insert `N` - 4 padding bytes or `N` - 2
+padding bytes if the C extension is enabled, the padding bytes insert before
+the location of the alignment diretive like `.align`, `.p2align` or `.balign`,
+the addend value of that relocation is the number of padding bytes;
+linker may remove arbitrary numbers of the padding bytes at the linking process
+to meet the alignment requirement.
+
+The assembler and linker must ensure padding bytes are valid instructions like
+`nop` or `c.nop`, assembler should insert null byte if the location isn't
+aligned to at least 2-bytes align, the only exception is when the location want
+to align is only aligned to 1 byte, assembler may padding null byte, however
+null padding byte might result illegal instruction exceptions at run-time if
+program execute to tha location, but that is not expected to happen since RISC-V
+require instruction align to 4-byte or 2-byte if the C extension is enabled.
 
 === Thread Local Storage
 
