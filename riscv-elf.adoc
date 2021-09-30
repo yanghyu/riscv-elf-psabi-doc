@@ -504,12 +504,12 @@ linker may remove arbitrary numbers of the padding bytes at the linking process
 to meet the alignment requirement.
 
 The assembler and linker must ensure padding bytes are valid instructions like
-`nop` or `c.nop`, assembler should insert null byte if the location isn't
-aligned to at least 2-bytes align, the only exception is when the location want
-to align is only aligned to 1 byte, assembler may padding null byte, however
-null padding byte might result illegal instruction exceptions at run-time if
-program execute to tha location, but that is not expected to happen since RISC-V
-require instruction align to 4-byte or 2-byte if the C extension is enabled.
+`nop` or `c.nop` if possible, assembler will insert padding bytes which might
+be invalid instruction encoding when align a location to 4-bytes or 2-byte if
+the C extension is enabled, those padding byte might result illegal instruction
+exceptions at run-time if program execute to tha location, but that is not
+expected to happen since RISC-V require instruction align to 4-byte or 2-byte
+if the C extension is enabled.
 
 === Thread Local Storage
 
