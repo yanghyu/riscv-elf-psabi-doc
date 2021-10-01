@@ -786,9 +786,8 @@ privileged specification versions are merged.
 
 === Mapping Symbol
 
-Mapping symbol is a special symbol class used for assist disassembler to
-having better knowledge of binary, it could be used for distinguish the
-code and data region.
+Section can have a mixture of code and data or code with different ISAs,
+mapping symbol is a special symbol class used for describe the boundaries.
 
 [%autowidth]
 |===
