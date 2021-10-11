@@ -487,21 +487,34 @@ label:
 The relocation type `R_RISCV_ALIGN` marks a location that must be aligned to
 `N`-bytes, where `N` is the smallest power of two that greater than the value
 of the addend field, e.g. `R_RISCV_ALIGN` with addend value 2 means align to 4
-bytes; this relocation is only required if the containing section
-has any `R_RISCV_RELAX` relocations.
+bytes; this relocation is only required if the containing section has any
+`R_RISCV_RELAX` relocations.
 
-This relocation is needed because code relaxation can shrink preceding code during the linking process, which may
-cause an aligned location to become mis-aligned.
+To ensure the linker can always satisfy the required alignment solely by
+deleting bytes, the compiler or assembler must emit a `R_RISCV_ALIGN` relocation
+and then insert `N - IALIGN` padding bytes before the location where we need to
+align, it could be mark by an alignment diretive like `.align`, `.p2align` or
+`.balign` or emit by compiler directly, the addend value of that relocation
+is the number of padding bytes.
 
-To ensure the linker can always satisfy the required alignment solely by deleting bytes, the assembler must emit a
-`R_RISCV_ALIGN` relocation and then insert `N - IALIGN` padding bytes before
-the location of the alignment diretive like `.align`, `.p2align` or `.balign`,
-the addend value of that relocation is the number of padding bytes;
-linker may remove arbitrary numbers of the padding bytes at the linking process
-to meet the alignment requirement.
+The compiler and assembler must ensure padding bytes are valid instructions
+without any side-effect like `nop` or `c.nop`, and make sure those instructions
+are aligned to IALIGN if possible.
 
-The assembler and linker must ensure padding bytes are valid instructions like
-`nop` or `c.nop` if possible.
+The linker may remove part of the padding bytes at the linking process to meet
+the alignment requirement, and make sure those padding bytes still are valid
+instructions and each instruction is aligned to at least IALIGN byte.
+
+NOTE: `R_RISCV_ALIGN` relocation is needed because code relaxation can shrink
+preceding code during the linking process, which may cause an aligned location
+to become mis-aligned.
+
+NOTE: IALIGN means the instruction-address alignment constraint. IALIGN is 4
+bytes in the base ISA, but some ISA extensions, including the compressed ISA
+extension, relax IALIGN to 2 bytes. IALIGN may not take on any value other than
+4 or 2, this term is also defined in `The RISC-V Instruction Set Manual` in
+similar meaning, the only difference is the psABI defined that in byte and
+the ISA manual defined that in bits.
 
 === Thread Local Storage
 
