@@ -490,14 +490,11 @@ of the addend field, e.g. `R_RISCV_ALIGN` with addend value 2 means align to 4
 bytes; this relocation is only required if the containing section
 has any `R_RISCV_RELAX` relocations.
 
-The reason why we need a special relocation for handing alignment is because
-code relaxation might shrink the code during the linking process, that may
-cause an aligned point become mis-aligned after code relaxation.
+This relocation is needed because code relaxation can shrink preceding code during the linking process, which may
+cause an aligned location to become mis-aligned.
 
-In order to let the linker have enough space to make sure the alignment
-requirement can be met after code relaxation, the assembler must insert a
-`R_RISCV_ALIGN` relocation and then insert `N` - 4 padding bytes or `N` - 2
-padding bytes if the C extension is enabled, the padding bytes insert before
+To ensure the linker can always satisfy the required alignment solely by deleting bytes, the assembler must emit a
+`R_RISCV_ALIGN` relocation and then insert `N - IALIGN` padding bytes before
 the location of the alignment diretive like `.align`, `.p2align` or `.balign`,
 the addend value of that relocation is the number of padding bytes;
 linker may remove arbitrary numbers of the padding bytes at the linking process
